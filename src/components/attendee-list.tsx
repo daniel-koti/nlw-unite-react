@@ -21,9 +21,26 @@ interface Attendee {
 }
 
 export function AttendeeList() {
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState(() => {
+    const url = new URL(window.location.toString())
 
+    if (url.searchParams.has('search')) {
+      return url.searchParams.get('search') ?? ''
+    }
+
+    return ''
+  })
+  
+  const [page, setPage] = useState(() => {
+    const url = new URL(window.location.toString())
+
+    if (url.searchParams.has('page')) {
+      return Number(url.searchParams.get('page'))
+    }
+
+    return 1
+  })
+  
   const [total, setTotal] = useState(0)
   const [attendees, setAttendees] = useState<Attendee[]>([])
 
@@ -33,7 +50,7 @@ export function AttendeeList() {
   useEffect(() => {
     const url = new URL('http://localhost:3333/events/9e9bd979-9d10-4915-b339-3786b1634f33/attendees')
 
-    url.searchParams.set('pageInde', String(page - 1))
+    url.searchParams.set('pageIndex', String(page - 1))
 
     if (search.length > 0) {
       url.searchParams.set('query', search)
@@ -47,25 +64,42 @@ export function AttendeeList() {
       })
   }, [page, search])
 
+  function setCurrentPage(page: number) {
+    const url = new URL(window.location.toString())
+    url.searchParams.set('page', String(page))
+
+    window.history.pushState({}, "", url)
+    setPage(page)
+  }
+
+  function setCurrentSearch(search: string) {
+    const url = new URL(window.location.toString())
+    url.searchParams.set('search', String(search))
+
+    window.history.pushState({}, "", url)
+    setSearch(search)
+  }
+
   function onSearchInputChanged(event: ChangeEvent<HTMLInputElement>) {
-    setSearch(event.target.value)
-    setPage(1)
+    setCurrentSearch(event.target.value)
+    setCurrentPage(1)
   }
 
   function goToNextPage() {
-    setPage(page + 1)
+    setCurrentPage(page + 1)
   }
 
   function goToPreviousPage() {
-    setPage(page - 1)
+    setCurrentPage(page - 1)
   }
 
   function goToFirstPage() {
-    setPage(1)
+    setCurrentPage(1)
   }
+  
 
   function goToLastPage() {
-    setPage(totalPages)
+    setCurrentPage(totalPages)
   }
 
   return (

@@ -11,8 +11,6 @@ import { TableRow } from './table/table-row';
 import { ChangeEvent, useState } from 'react';
 import { attendees } from '../data/attendees';
 
-
-
 dayjs.extend(relativeTime)
 dayjs.locale('pt-br')
 
@@ -48,7 +46,12 @@ export function AttendeeList() {
         <h1 className="text-2xl font-bold">Participantes</h1>
         <div className="px-3 py-1.5 border border-white/10 rounded-lg text-sm w-72 flex items-center gap-3">
           <Search className='size-4 text-emerald-300' />
-          <input placeholder="Busque o participante..."  className="flex-1 outline-none bg-transparent border-0 p-0 ring-0 text-sm"/>
+          <input 
+            value={search} 
+            onChange={(event) => onSearchInputChanged(event)} 
+            placeholder="Busque o participante..."  
+            className="flex-1 outline-none bg-transparent border-0 p-0 ring-0 text-sm"
+          />
         </div>
       </div>
       

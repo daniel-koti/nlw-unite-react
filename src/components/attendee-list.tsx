@@ -2,26 +2,54 @@ import { Search, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, Chevro
 import dayjs from 'dayjs'
 import 'dayjs/locale/pt-br'
 import relativeTime from 'dayjs/plugin/relativeTime'
-
 import { IconButton } from './icon-button';
 import { Table } from './table/table';
 import { TableHeader } from './table/table-header';
 import { TableCell } from './table/table-cell';
 import { TableRow } from './table/table-row';
-import { ChangeEvent, useState } from 'react';
-import { attendees } from '../data/attendees';
+import { ChangeEvent, useEffect, useState } from 'react';
 
 dayjs.extend(relativeTime)
 dayjs.locale('pt-br')
+
+interface Attendee {
+  id: string
+  name: string
+  email: string
+  createdAt: string
+  checkedInAt: string | null
+}
 
 export function AttendeeList() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
-  const totalPages = Math.ceil(attendees.length / 10)
+  const [total, setTotal] = useState(0)
+  const [attendees, setAttendees] = useState<Attendee[]>([])
+
+ 
+  const totalPages = Math.ceil(total / 10)
+
+  useEffect(() => {
+    const url = new URL('http://localhost:3333/events/9e9bd979-9d10-4915-b339-3786b1634f33/attendees')
+
+    url.searchParams.set('pageInde', String(page - 1))
+
+    if (search.length > 0) {
+      url.searchParams.set('query', search)
+    }
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        setAttendees(data.attendees)
+        setTotal(data.total)
+      })
+  }, [page, search])
 
   function onSearchInputChanged(event: ChangeEvent<HTMLInputElement>) {
     setSearch(event.target.value)
+    setPage(1)
   }
 
   function goToNextPage() {
@@ -50,7 +78,7 @@ export function AttendeeList() {
             value={search} 
             onChange={(event) => onSearchInputChanged(event)} 
             placeholder="Busque o participante..."  
-            className="flex-1 outline-none bg-transparent border-0 p-0 ring-0 text-sm"
+            className="flex-1 outline-none bg-transparent border-0 p-0 ring-0 text-sm focus:ring-0"
           />
         </div>
       </div>
@@ -69,7 +97,7 @@ export function AttendeeList() {
             </tr>
           </thead>
           <tbody>
-            {attendees.slice((page - 1) * 10, page * 10).map((attendee) => (
+            {attendees.map((attendee) => (
               <TableRow key={attendee.id} className='border-b border-white/10 hover:bg-white/10'>
                 <TableCell className='py-3 px-4 text-sm text-zinc-300'>
                   <input type="checkbox" className='size-4 bg-black/20 rounded border border-white/10' />
@@ -82,7 +110,11 @@ export function AttendeeList() {
                   </div>
                 </TableCell>
                 <TableCell className='py-3 px-4 text-sm text-zinc-300'>{dayjs().to(attendee.createdAt)}</TableCell>
-                <TableCell className='py-3 px-4 text-sm text-zinc-300'>{dayjs().to(attendee.checkedInAt)}</TableCell>
+                <TableCell className='py-3 px-4 text-sm text-zinc-300'>
+                  {attendee.checkedInAt === null 
+                  ? <span className='text-zinc-500'>Não fez o check-in</span>
+                  : dayjs().to(attendee.checkedInAt)}
+                  </TableCell>
                 <TableCell className='py-3 px-4 text-sm text-zinc-300'>
                   <IconButton transparent className='bg-black/20 border border-white/10 rounded-md p-1.5'>
                     <MoreHorizontal className='siz-4' />
@@ -95,7 +127,7 @@ export function AttendeeList() {
           <tfoot>
             <tr>
               <TableCell colSpan={3} className='py-3 px-4 text-sm text-zinc-300'>
-                Mostrando 10 de {attendees.length} itens
+                Mostrando {attendees.length} de {total} itens
               </TableCell>
               <td colSpan={3} className='py-3 px-4 text-sm text-zinc-300 text-right'>
                 <div className='inline-flex items-center gap-8'>
